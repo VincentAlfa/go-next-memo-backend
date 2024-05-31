@@ -29,8 +29,12 @@ func main() {
 	})
 
 	//users
-	e.GET("/api/users", controller.SelectALLUser)
-		
+	e.POST("/api/users/register", controller.RegisterUser)
+	e.POST("/api/users/login", controller.LoginUser)
+
+
+
+
 	e.Start(":4000")
 }
 
