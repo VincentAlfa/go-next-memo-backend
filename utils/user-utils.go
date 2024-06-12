@@ -6,7 +6,7 @@ import (
 	"go-next-memo/models"
 )
 
-func GetUserByEmail(email string) (*model.User, error) {
+func GetUserByEmail(email string) (model.User, error) {
 	var user model.User
 	db := database.GetDB()
 	row := db.QueryRow("SELECT email, password FROM user WHERE email = ? ", email)
@@ -14,10 +14,10 @@ func GetUserByEmail(email string) (*model.User, error) {
 	err := row.Scan(&user.Email, &user.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // No user found
+			return user, err // No user found
 		}
-		return nil, err // Other errors
+		return user, err // Other errors
 	}
 
-	return &user, nil
+	return user, nil
 }

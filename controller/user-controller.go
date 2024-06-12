@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"database/sql"
+	// "database/sql"
 	"go-next-memo/database"
 	"go-next-memo/models"
 	"go-next-memo/utils"
-	"log"
+	// "log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -19,18 +19,14 @@ func RegisterUser(c echo.Context) error {
 		panic(err)
 	}
 	
-	userData, err := utils.GetUserByEmail(user.Email)
-	if err != nil && err != sql.ErrNoRows {
-		log.Println("Error getting user from db:", err)
-		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
-	}
+	userData, _ := utils.GetUserByEmail(user.Email)
+
+	if user.Email == userData.Email {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message" : "email already registered invalid"})
+	} 
 
 	if user.Email == "" {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message": "email is empty"})
-	}
-
-	if user.Email == userData.Email {
-		return c.JSON(http.StatusBadRequest, echo.Map{"message": "email already registered"})
 	}
 
 	query := "INSERT INTO user (email, password) values (?, ?)"
