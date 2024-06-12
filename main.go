@@ -6,6 +6,7 @@ import (
 	"go-next-memo/controller"
 	"go-next-memo/database"
 	"net/http"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -20,9 +21,9 @@ func main() {
 		panic(err.Error())
 	}
 	defer db.Close()
-	
 
 	e.Use(middleware.CORS())
+	e.Use(middleware.Logger())
 	
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusAccepted, "string")
@@ -31,9 +32,6 @@ func main() {
 	//users
 	e.POST("/api/users/register", controller.RegisterUser)
 	e.POST("/api/users/login", controller.LoginUser)
-
-
-
 
 	e.Start(":4000")
 }

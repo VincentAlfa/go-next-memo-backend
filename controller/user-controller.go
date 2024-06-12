@@ -1,21 +1,36 @@
 package controller
 
 import (
+	"database/sql"
 	"go-next-memo/database"
 	"go-next-memo/models"
 	"go-next-memo/utils"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
 func RegisterUser(c echo.Context) error {
-	db:= database.GetDB()
+	db := database.GetDB()
 	user := model.User{}
-
 	err := c.Bind(&user)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
+	}
+	
+	userData, err := utils.GetUserByEmail(user.Email)
+	if err != nil && err != sql.ErrNoRows {
+		log.Println("Error getting user from db:", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
+	}
+
+	if user.Email == "" {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "email is empty"})
+	}
+
+	if user.Email == userData.Email {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "email already registered"})
 	}
 
 	query := "INSERT INTO user (email, password) values (?, ?)"
@@ -24,13 +39,7 @@ func RegisterUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
-	userData, _ := utils.GetUserByEmail(user.Email)
-
-	if user.Email == userData.Email {
-		return c.JSON(http.StatusBadRequest, echo.Map{"message": "email already registered"})
-	}
-
-	return c.JSON(http.StatusCreated, echo.Map{"message": "login success"})
+	return c.JSON(http.StatusCreated, echo.Map{"message": "register success"})
 }
 
 func LoginUser (c echo.Context) error {
@@ -41,11 +50,6 @@ func LoginUser (c echo.Context) error {
 		panic(err)
 	}
 
-	query := "SELECT email, password FROM user WHERE email = ? "
-	row := db.QueryRow(query, user.Email)
-	if row.Err() != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"message" : row.Err()})
-	}
 	userData, _ := utils.GetUserByEmail(user.Email)
 
 	if user.Email != userData.Email {
@@ -54,6 +58,12 @@ func LoginUser (c echo.Context) error {
 
 	if user.Password != userData.Password {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message" : "password invalid"})
+	}
+
+	query := "SELECT email, password FROM user WHERE email = ? "
+	row := db.QueryRow(query, user.Email)
+	if row.Err() != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message" : row.Err()})
 	}
 
 	row.Scan(&user.Email, &user.Password)
