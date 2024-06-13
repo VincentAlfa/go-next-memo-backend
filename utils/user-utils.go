@@ -21,3 +21,4 @@ func GetUserByEmail(email string) (model.User, error) {
 
 	return user, nil
 }
+

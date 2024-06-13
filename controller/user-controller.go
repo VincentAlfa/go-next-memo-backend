@@ -1,11 +1,9 @@
 package controller
 
 import (
-	// "database/sql"
 	"go-next-memo/database"
 	"go-next-memo/models"
 	"go-next-memo/utils"
-	// "log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -29,8 +27,13 @@ func RegisterUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message": "email is empty"})
 	}
 
+	hashedPassword, err := utils.HashPassword(user.Password)
+	if err != nil {
+		panic(err)
+	}
+
 	query := "INSERT INTO user (email, password) values (?, ?)"
-	_, err = db.Exec(query, user.Email, user.Password)
+	_, err = db.Exec(query, user.Email, hashedPassword)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
@@ -52,10 +55,11 @@ func LoginUser (c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message" : "email invalid"})
 	} 
 
-	if user.Password != userData.Password {
+	res := utils.CheckHashedPassword(user.Password, userData.Password)
+	if !res {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message" : "password invalid"})
 	}
-
+	
 	query := "SELECT email, password FROM user WHERE email = ? "
 	row := db.QueryRow(query, user.Email)
 	if row.Err() != nil {
