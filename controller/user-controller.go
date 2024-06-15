@@ -6,8 +6,24 @@ import (
 	"go-next-memo/utils"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
+
+var sessionId = "sessions"
+var store = sessions.NewCookieStore([]byte(sessionId))
+
+func AuthMiddleWare (next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		session, _ := store.Get(c.Request(), sessionId)
+
+		if session.Values["email"] == nil {
+			return c.JSON(http.StatusUnauthorized, echo.Map{"message": "Unauthorized"})
+		}
+		return next(c)
+	}
+}
+
 
 func RegisterUser(c echo.Context) error {
 	db := database.GetDB()
@@ -66,6 +82,23 @@ func LoginUser (c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message" : row.Err()})
 	}
 
+
+	session, _ := store.Get(c.Request(), sessionId)
+	session.Values["email"] = user.Email
+	session.Save(c.Request(), c.Response())  
+
 	row.Scan(&user.Email, &user.Password)
 	return c.JSON(http.StatusAccepted, echo.Map{"message" : "login Success" })
 }
+
+// func ForgotPasswordUser(c echo.Context) error {
+// 	db := database.GetDB()
+// 	user := model.User{}
+// 	err := c.Bind(&user)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	query := 
+// 	row := db.Exec()
+
+// }

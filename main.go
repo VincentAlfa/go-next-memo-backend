@@ -32,7 +32,13 @@ func main() {
 	//users
 	e.POST("/api/users/register", controller.RegisterUser)
 	e.POST("/api/users/login", controller.LoginUser)
+	
+	e.GET("/api/users/protected", protectedRouteTest, controller.AuthMiddleWare)
+	
 
 	e.Start(":4000")
 }
 
+func protectedRouteTest (c echo.Context) error{
+	return c.JSON(http.StatusOK, echo.Map{"message": "this is protected route"})
+}
